@@ -3,7 +3,8 @@
 ## 📦 Was du bekommst
 
 - **build_poi_sprites.sh** - Shell-Script (Docker-kompatibel)
-- **build_poi_sprites.py** - Python-Backend
+- **map_poi_icons.py** - Interaktives Mapping (POI → Font Awesome)
+- **build_poi_sprites.py** - Sprite-Builder (liest Mapping)
 - **README_DOCKER.md** - Vollständige Dokumentation
 - **example_integration.sh** - Beispiel-Integration in start.sh
 
@@ -17,9 +18,11 @@ scp build_poi_sprites.* user@server:/tmp/
 
 # Auf dem Server:
 sudo cp /tmp/build_poi_sprites.sh /srv/scripts/
+sudo cp /tmp/map_poi_icons.py /srv/scripts/
 sudo cp /tmp/build_poi_sprites.py /srv/scripts/
 sudo chmod +x /srv/scripts/build_poi_sprites.sh
 sudo chmod +x /srv/scripts/build_poi_sprites.py
+sudo chmod +x /srv/scripts/map_poi_icons.py
 ```
 
 ### 2. Ausführen
