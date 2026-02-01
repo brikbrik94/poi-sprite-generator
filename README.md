@@ -1,0 +1,1 @@
+# poi-sprite-generator
