@@ -6,7 +6,7 @@ Automatischer Sprite-Generator für PMTiles POI-Layer, integriert in deine beste
 
 ```bash
 # Kopiere die Scripts nach /srv/scripts
-sudo cp build_poi_sprites.sh build_poi_sprites.py /srv/scripts/
+sudo cp build_poi_sprites.sh map_poi_icons.py build_poi_sprites.py /srv/scripts/
 
 # Mache ausführbar
 sudo chmod +x /srv/scripts/build_poi_sprites.sh
@@ -16,7 +16,7 @@ cd /srv/scripts
 ./build_poi_sprites.sh
 ```
 
-Das Script wird dich **interaktiv** nach fehlenden Icon-Zuordnungen fragen.
+Das Mapping-Script wird dich **interaktiv** nach fehlenden Icon-Zuordnungen fragen.
 
 ## 📁 Verzeichnisstruktur
 

@@ -4,6 +4,7 @@ POI Sprite Builder - Docker Edition
 Angepasst für bestehende Geodata Pipeline mit Docker-basiertem spreet
 """
 
+import argparse
 import json
 import os
 import sys
@@ -12,6 +13,8 @@ import shutil
 from pathlib import Path
 import urllib.request
 import zipfile
+
+from poi_mapping import ALL_POI_TYPES
 
 # Farben für Terminal-Output
 class Colors:
@@ -37,228 +40,6 @@ def print_warning(text):
 
 def print_info(text):
     print(f"{Colors.OKCYAN}ℹ{Colors.ENDC} {text}")
-
-# Automatisches Mapping: POI-Typ -> Font Awesome Icon-Name (ohne fa- Präfix)
-AUTO_MAPPINGS = {
-    # UNTERKUNFT & GASTRO
-    "lodging": "bed",
-    "restaurant": "utensils",
-    "cafe": "coffee",
-    "bar": "wine-glass",
-    "beer": "beer-mug-empty",
-    "biergarten": "beer-mug-empty",
-    "fast_food": "burger",
-    "ice_cream": "ice-cream",
-    "pub": "beer-mug-empty",
-    
-    # EINZELHANDEL & SERVICES
-    "shop": "store",
-    "grocery": "basket-shopping",
-    "bakery": "bread-slice",
-    "butcher": "meat",
-    "alcohol_shop": "wine-bottle",
-    "clothing_store": "shirt",
-    "hairdresser": "scissors",
-    "laundry": "soap",
-    
-    # GESUNDHEIT
-    "hospital": "hospital",
-    "doctors": "user-doctor",
-    "pharmacy": "prescription-bottle",
-    "dentist": "tooth",
-    "veterinary": "paw",
-    
-    # BILDUNG
-    "school": "school",
-    "college": "graduation-cap",
-    "library": "book",
-    "kindergarten": "child",
-    
-    # ÖFFENTLICHE EINRICHTUNGEN
-    "town_hall": "landmark",
-    "post": "envelope",
-    "police": "shield",
-    "fire_station": "fire-extinguisher",
-    "prison": "lock",
-    "office": "building",
-    "community_centre": "users",
-    "public_building": "building-columns",
-    
-    # KULTUR & FREIZEIT
-    "museum": "building-columns",
-    "art_gallery": "palette",
-    "theatre": "masks-theater",
-    "cinema": "film",
-    "castle": "chess-rook",
-    "monument": "monument",
-    "attraction": "star",
-    "theme_park": "ferris-wheel",
-    "zoo": "hippo",
-    "aquarium": "fish",
-    "music": "music",
-    "hackerspace": "laptop-code",
-    
-    # RELIGIÖS
-    "place_of_worship": "place-of-worship",
-    
-    # VERKEHR & INFRASTRUKTUR
-    "parking": "square-parking",
-    "bicycle_parking": "bicycle",
-    "motorcycle_parking": "motorcycle",
-    "fuel": "gas-pump",
-    "bus": "bus",
-    "railway": "train",
-    "aerialway": "cable-car",
-    "ferry_terminal": "ferry",
-    "gate": "door-open",
-    "lift_gate": "bars",
-    "bollard": "road-barrier",
-    "cycle_barrier": "bars",
-    "stile": "stairs",
-    "sally_port": "door-closed",
-    "toll_booth": "money-bill",
-    "border_control": "passport",
-    "entrance": "door-open",
-    "harbor": "anchor",
-    
-    # SPORT & RECREATION - Ball-Sportarten
-    "pitch": "futbol",
-    "stadium": "building",
-    "sports_centre": "dumbbell",
-    "athletics": "person-running",
-    "football": "futbol",
-    "soccer": "futbol",
-    "basketball": "basketball",
-    "volleyball": "volleyball",
-    "beachvolleyball": "volleyball",
-    "tennis": "table-tennis-paddle-ball",
-    "table_tennis": "table-tennis-paddle-ball",
-    "handball": "hand",
-    "team_handball": "hand",
-    "baseball": "baseball",
-    "field_hockey": "hockey-puck",
-    "hockey": "hockey-puck",
-    "rugby_union": "football",
-    "badminton": "shuttle-space",
-    
-    # SPORT - Wasser
-    "swimming": "person-swimming",
-    "swimming_pool": "person-swimming",
-    "water_park": "water",
-    "scuba_diving": "water",
-    "water_ski": "person-skiing-nordic",
-    "sailing": "sailboat",
-    "rowing": "water",
-    "canoe": "water",
-    "surfing": "water",
-    "diving": "water",
-    
-    # SPORT - Winter
-    "winter_sports": "snowflake",
-    "ice_hockey": "hockey-puck",
-    "ice_rink": "snowflake",
-    "ice_stock": "snowflake",
-    "curling": "snowflake",
-    "skiing": "person-skiing",
-    "skating": "snowflake",
-    "toboggan": "sleigh",
-    
-    # SPORT - Andere
-    "golf": "golf-ball-tee",
-    "disc_golf": "compact-disc",
-    "cycling": "bicycle",
-    "bicycle": "bicycle",
-    "running": "person-running",
-    "climbing": "mountain",
-    "climbing_adventure": "mountain",
-    "archery": "bullseye",
-    "shooting": "bullseye",
-    "shooting_range": "bullseye",
-    "gymnastics": "person-walking",
-    "yoga": "spa",
-    "judo": "hand-fist",
-    "boxing": "hand-fist",
-    "wrestling": "hand-fist",
-    "equestrian": "horse",
-    "horse_racing": "horse",
-    "dog_racing": "dog",
-    "motor": "car",
-    "motocross": "motorcycle",
-    "rc_car": "car",
-    "karting": "car",
-    "skateboard": "person-skateboarding",
-    "bmx": "bicycle",
-    "paragliding": "plane",
-    "free_flying": "plane",
-    "model_aerodrome": "plane",
-    "orienteering": "compass",
-    "paintball": "bullseye",
-    "billiards": "circle",
-    "table_soccer": "futbol",
-    "chess": "chess",
-    "bowls": "bowling-ball",
-    "boules": "circle",
-    "horseshoes": "horse",
-    "racquet": "table-tennis-paddle-ball",
-    "paddle_tennis": "table-tennis-paddle-ball",
-    "long_jump": "person-running",
-    
-    # NATUR & PARKS
-    "park": "tree",
-    "garden": "leaf",
-    "playground": "child",
-    "picnic_site": "utensils",
-    "dog_park": "dog",
-    "campsite": "campground",
-    "basin": "water",
-    "reservoir": "water",
-    
-    # UTILITIES & SERVICES
-    "atm": "money-bill",
-    "toilets": "restroom",
-    "drinking_water": "faucet-drip",
-    "fountain": "fountain",
-    "waste_basket": "trash-can",
-    "recycling": "recycle",
-    "information": "circle-info",
-    "shelter": "house",
-    "bench": "chair",
-    "telephone": "phone",
-    "car": "car",
-    "multi": "circle",
-}
-
-# Alle POI-Typen aus der Referenz
-ALL_POI_TYPES = [
-    "lodging", "restaurant", "cafe", "bar", "beer", "biergarten", "fast_food", 
-    "ice_cream", "pub", "shop", "grocery", "bakery", "butcher", "alcohol_shop", 
-    "clothing_store", "hairdresser", "laundry", "hospital", "doctors", "pharmacy", 
-    "dentist", "veterinary", "school", "college", "library", "kindergarten",
-    "town_hall", "post", "police", "fire_station", "prison", "office", 
-    "community_centre", "public_building", "museum", "art_gallery", "theatre", 
-    "cinema", "castle", "monument", "attraction", "theme_park", "zoo", "aquarium", 
-    "music", "hackerspace", "place_of_worship", "parking", "bicycle_parking", 
-    "motorcycle_parking", "fuel", "bus", "railway", "aerialway", "ferry_terminal", 
-    "gate", "lift_gate", "bollard", "cycle_barrier", "stile", "sally_port", 
-    "toll_booth", "border_control", "entrance", "harbor", "pitch", "stadium", 
-    "sports_centre", "athletics", "football", "soccer", "basketball", "volleyball", 
-    "beachvolleyball", "tennis", "table_tennis", "handball", "team_handball", 
-    "baseball", "field_hockey", "hockey", "rugby_union", "badminton", "swimming", 
-    "swimming_pool", "water_park", "scuba_diving", "water_ski", "sailing", "rowing", 
-    "canoe", "surfing", "diving", "winter_sports", "ice_hockey", "ice_rink", 
-    "ice_stock", "curling", "skiing", "skating", "toboggan", "golf", "disc_golf", 
-    "cycling", "bicycle", "running", "climbing", "climbing_adventure", "archery", 
-    "shooting", "shooting_range", "gymnastics", "yoga", "judo", "boxing", 
-    "wrestling", "equestrian", "horse_racing", "dog_racing", "motor", "motocross", 
-    "rc_car", "karting", "skateboard", "bmx", "paragliding", "free_flying", 
-    "model_aerodrome", "orienteering", "paintball", "billiards", "table_soccer", 
-    "chess", "bowls", "boules", "horseshoes", "racquet", "paddle_tennis", 
-    "long_jump", "park", "garden", "playground", "picnic_site", "dog_park", 
-    "campsite", "basin", "reservoir", "atm", "toilets", "drinking_water", 
-    "fountain", "waste_basket", "recycling", "information", "shelter", "bench", 
-    "telephone", "car", "multi",
-]
-
 
 class POISpriteBuilder:
     def __init__(self, 
@@ -289,67 +70,20 @@ class POISpriteBuilder:
             directory.mkdir(parents=True, exist_ok=True)
             print_success(f"Verzeichnis erstellt: {directory}")
     
-    def load_existing_mapping(self):
-        """Lade existierendes Mapping falls vorhanden"""
+    def load_existing_mapping(self, required=True):
+        """Lade existierendes Mapping"""
         if self.mapping_file.exists():
             with open(self.mapping_file, 'r') as f:
                 self.mapping = json.load(f)
             print_success(f"Existierendes Mapping geladen: {len(self.mapping)} Einträge")
-        else:
-            print_info("Kein existierendes Mapping gefunden, starte neu")
-    
-    def save_mapping(self):
-        """Speichere Mapping in JSON"""
-        with open(self.mapping_file, 'w') as f:
-            json.dump(self.mapping, f, indent=2, ensure_ascii=False)
-        print_success(f"Mapping gespeichert: {self.mapping_file}")
-    
-    def create_mapping(self):
-        """Erstelle interaktives Mapping"""
-        print_header("Erstelle POI → Font Awesome Mapping")
-        
-        print_info(f"Insgesamt {len(ALL_POI_TYPES)} POI-Typen zu mappen")
-        print_info(f"Automatisch gemappt: {len([p for p in ALL_POI_TYPES if p in AUTO_MAPPINGS])}")
-        print_info(f"Manuelle Eingabe nötig: {len([p for p in ALL_POI_TYPES if p not in AUTO_MAPPINGS])}")
-        print()
-        
-        unmapped = []
-        
-        for poi_type in ALL_POI_TYPES:
-            # Überspringe wenn bereits gemappt
-            if poi_type in self.mapping:
-                continue
-                
-            # Versuche Auto-Mapping
-            if poi_type in AUTO_MAPPINGS:
-                self.mapping[poi_type] = AUTO_MAPPINGS[poi_type]
-                print_success(f"{poi_type:30} → {AUTO_MAPPINGS[poi_type]}")
-            else:
-                unmapped.append(poi_type)
-        
-        # Interaktive Eingabe für unmapped POIs
-        if unmapped:
-            print()
-            print_warning(f"{len(unmapped)} POI-Typen benötigen manuelle Zuordnung")
-            print_info("Suche Icons auf: https://fontawesome.com/search?o=r&m=free")
-            print_info("Gib nur den Icon-Namen ein (ohne 'fa-' Präfix)")
-            print_info("Beispiel: Für 'fa-circle' gib nur 'circle' ein")
-            print_info("Drücke ENTER ohne Eingabe um zu überspringen")
-            print()
-            
-            for poi_type in unmapped:
-                icon = input(f"{Colors.OKCYAN}Icon für '{poi_type}': {Colors.ENDC}").strip()
-                if icon:
-                    self.mapping[poi_type] = icon
-                    print_success(f"Gespeichert: {poi_type} → {icon}")
-                else:
-                    print_warning(f"Übersprungen: {poi_type}")
-        
-        self.save_mapping()
-        
-        mapped_count = len([p for p in ALL_POI_TYPES if p in self.mapping])
-        print()
-        print_success(f"Mapping abgeschlossen: {mapped_count}/{len(ALL_POI_TYPES)} POI-Typen gemappt")
+            return True
+
+        if required:
+            print_warning("Kein Mapping gefunden. Bitte zuerst map_poi_icons.py ausführen.")
+            return False
+
+        print_info("Kein existierendes Mapping gefunden, starte neu")
+        return True
     
     def download_fontawesome(self):
         """Lade Font Awesome Free herunter"""
@@ -611,8 +345,8 @@ Basiert auf Font Awesome Free Icons.
         """Führe kompletten Build-Prozess aus"""
         try:
             self.setup_directories()
-            self.load_existing_mapping()
-            self.create_mapping()
+            if not self.load_existing_mapping(required=True):
+                sys.exit(1)
             self.download_fontawesome()
             self.copy_svgs()
             
@@ -642,5 +376,17 @@ Basiert auf Font Awesome Free Icons.
 
 
 if __name__ == "__main__":
-    builder = POISpriteBuilder()
+    parser = argparse.ArgumentParser(description="Build POI sprites from a saved mapping.")
+    parser.add_argument("--build-dir", default=os.getenv("BUILD_DIR", "/srv/build/poi-sprites"))
+    parser.add_argument("--output-dir", default=os.getenv("OUTPUT_DIR", "/srv/assets/sprites/poi"))
+    parser.add_argument("--docker-image", default=os.getenv("DOCKER_IMAGE", "local-spreet-builder"))
+    parser.add_argument("--sprite-name", default=os.getenv("SPRITE_NAME", "poi"))
+    args = parser.parse_args()
+
+    builder = POISpriteBuilder(
+        build_dir=args.build_dir,
+        output_dir=args.output_dir,
+        docker_image=args.docker_image,
+        sprite_name=args.sprite_name,
+    )
     builder.run()

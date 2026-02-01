@@ -1,14 +1,12 @@
 # poi-sprite-generator
 
-Automatischer Sprite-Generator für POI-Icons auf Basis von Font Awesome Free. Das Repository liefert ein Python-Backend und ein Shell-Wrapper-Script, die zusammen ein Icon-Mapping erstellen, SVGs sammeln und über Docker/spreet Sprite-Sheets für MapLibre erzeugen.
+Automatischer Sprite-Generator für POI-Icons auf Basis von Font Awesome Free. Das Repository liefert ein Mapping-Script und einen Sprite-Builder, die zusammen ein Icon-Mapping erstellen, SVGs sammeln und über Docker/spreet Sprite-Sheets für MapLibre erzeugen.
 
 ## Überblick
 
-* `build_poi_sprites.py` übernimmt das komplette Build-Processing:
-  * erstellt/verwendet ein persistiertes POI→Icon-Mapping (`/srv/build/poi-sprites/poi_mapping.json`).【F:build_poi_sprites.py†L236-L361】
-  * lädt Font Awesome Free, kopiert die gemappten SVGs und erzeugt Sprites via Docker/spreet.【F:build_poi_sprites.py†L363-L552】
-  * schreibt eine README und Build-Metadaten in die Output- und Build-Verzeichnisse.【F:build_poi_sprites.py†L554-L643】
-* `build_poi_sprites.sh` prüft Abhängigkeiten, baut bei Bedarf das Docker-Image und startet das Python-Script.【F:build_poi_sprites.sh†L1-L126】
+* `map_poi_icons.py` erstellt (interaktiv) das POI→Icon-Mapping und speichert es unter `/srv/build/poi-sprites/poi_mapping.json`.【F:map_poi_icons.py†L1-L140】
+* `build_poi_sprites.py` lädt das Mapping, sammelt die SVGs und erzeugt Sprites via Docker/spreet.【F:build_poi_sprites.py†L236-L560】
+* `build_poi_sprites.sh` prüft Abhängigkeiten, führt ggf. das Mapping aus und startet den Builder.【F:build_poi_sprites.sh†L1-L138】
 
 ## Voraussetzungen
 
@@ -24,7 +22,7 @@ Die Standardpfade können über Umgebungsvariablen im Shell-Script angepasst wer
 ./build_poi_sprites.sh
 ```
 
-Das Script erstellt die Sprites unter `/srv/assets/sprites/poi/` und speichert das Mapping in `/srv/build/poi-sprites/poi_mapping.json`. Bei fehlenden Zuordnungen fragt das Python-Script interaktiv nach Icon-Namen. 【F:build_poi_sprites.py†L301-L361】
+Das Script erstellt zuerst das Mapping (falls noch nicht vorhanden) und erzeugt danach die Sprites unter `/srv/assets/sprites/poi/`. Fehlende Zuordnungen werden im Mapping-Schritt interaktiv abgefragt. 【F:build_poi_sprites.sh†L1-L138】
 
 ## MapLibre Integration
 

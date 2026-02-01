@@ -91,14 +91,30 @@ echo ""
 # Finde das Python-Script (sollte im gleichen Verzeichnis sein)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PYTHON_SCRIPT="$SCRIPT_DIR/build_poi_sprites.py"
+MAPPER_SCRIPT="$SCRIPT_DIR/map_poi_icons.py"
+MAPPING_FILE="$BUILD_DIR/poi_mapping.json"
 
 if [ ! -f "$PYTHON_SCRIPT" ]; then
     echo -e "${RED}✗ Python-Script nicht gefunden: $PYTHON_SCRIPT${NC}"
     exit 1
 fi
+if [ ! -f "$MAPPER_SCRIPT" ]; then
+    echo -e "${RED}✗ Mapper-Script nicht gefunden: $MAPPER_SCRIPT${NC}"
+    exit 1
+fi
 
-# Führe Python-Script aus
-python3 "$PYTHON_SCRIPT"
+# Mapping nur erstellen, wenn noch nicht vorhanden
+if [ ! -f "$MAPPING_FILE" ]; then
+    echo -e "${BLUE}--- Erstelle POI → Font Awesome Mapping... ---${NC}"
+    python3 "$MAPPER_SCRIPT" --build-dir "$BUILD_DIR"
+fi
+
+# Führe Sprite-Builder aus
+python3 "$PYTHON_SCRIPT" \
+    --build-dir "$BUILD_DIR" \
+    --output-dir "$OUTPUT_DIR" \
+    --docker-image "$DOCKER_IMAGE" \
+    --sprite-name "$SPRITE_NAME"
 
 exit_code=$?
 
